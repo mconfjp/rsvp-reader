@@ -43,6 +43,11 @@
     display: inline-block; background: var(--accent); color: var(--accent-text); text-decoration: none;
     font-weight: 700; padding: 12px 18px; border-radius: 12px; margin: 4px 0 8px;
   }
+  textarea.code {
+    width: 100%; font: 12px/1.5 ui-monospace, Menlo, monospace; background: var(--code); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: vertical;
+  }
+  button.btn { border: 0; font: inherit; font-weight: 700; cursor: pointer; }
   code { background: var(--code); border-radius: 6px; padding: 1px 6px; font-size: .9em; word-break: break-all; }
   details { margin-top: 8px; }
   summary { cursor: pointer; color: var(--muted); }
@@ -58,43 +63,51 @@
 
   <section>
     <h2>iPhone：共有メニューから開く</h2>
+    <p>ショートカットAppで一度だけ作っておくと、Safariで記事を開いて「共有 → RSVPで読む」をタップするだけで読めるようになります。</p>
     <ol>
-      <li>iPhoneで下のボタンをタップして、ショートカットを追加する</li>
-      <li>Safariで記事を開き、共有ボタン →「RSVPで読む」をタップ</li>
-      <li>RSVPリーダーが開いたら「タップして受け取った記事を読む」を押し、出てきた「ペースト」をタップ</li>
-    </ol>
-    <a class="btn" href="https://www.icloud.com/shortcuts/2f5ec157e4cc4ce2a1e8d28ff109fd19">ショートカットを追加</a>
-    <p class="note">Safariのリーダー機能で本文だけを取り出し、クリップボード経由で渡します。本文はサーバーには送信されません。<br>ホーム画面に追加したアプリが開いた場合も、同じボタン（「クリップボードから読む」）で読めます。</p>
-
-    <details>
-      <summary>自分で作る場合の手順</summary>
-      <ol>
+      <li>iPhoneの「設定」→「アプリ」→「ショートカット」→「詳細」で「<b>スクリプトの実行を許可</b>」をオンにする</li>
       <li>ショートカットAppで「＋」を押して新規作成し、名前を「RSVPで読む」にする</li>
       <li>名前の横の ▾ →「詳細」で「共有シートに表示」をオンにする。先頭に出る「共有シートから入力を受け取る」の種類を「Safari Webページ」だけにする</li>
-      <li>「Safariリーダーから記事を取得」を追加する</li>
-      <li>「記事の詳細を取得」を追加し、詳細を「本文」にする</li>
-      <li>「クリップボードにコピー」を追加する（入力は「本文」）</li>
+      <li>「<b>WebページでJavaScriptを実行</b>」を追加する（Webページは「ショートカットの入力」）。中のコードを全部消して、下のスクリプトを貼り付ける</li>
+      <li>「クリップボードにコピー」を追加する（入力は「JavaScriptの結果」）</li>
       <li>「URLを開く」を追加し、URLに <code>https://mconfjp.github.io/rsvp-reader/?clip</code> と入力する</li>
     </ol>
-    <p class="note">アクション名はiOSのバージョンによって少し違うことがあります。検索欄に「記事」「クリップボード」と入れると見つかります。</p>
-    </details>
+    <textarea id="script" class="code" readonly rows="6"></textarea>
+    <button id="copyScript" class="btn" type="button">スクリプトをコピー</button>
+    <p class="note">使うとき：共有 →「RSVPで読む」でRSVPリーダーが開いたら、「タップして受け取った記事を読む」を押し、出てきた「ペースト」をタップします。<br>
+    初めてのサイトでは「〜へのアクセスを許可しますか」と聞かれるので「常に許可」を選んでください。<br>
+    本文の取り出しはiPhoneの中で行い、クリップボード経由で渡すので、本文はサーバーには送信されません。<br>
+    ページ内の文章を選択してから共有すると、選択した部分だけを読めます。</p>
   </section>
 
   <section>
     <h2>PC：ブックマークレット</h2>
     <p>下のボタンをブックマークバーにドラッグして登録します。記事のページでそのブックマークをクリックすると、本文を取り出してRSVPリーダーを新しいタブで開きます。</p>
     <a id="bm" class="btn" href="#">RSVPで読む</a>
-    <p class="note">ページ内の文章を選択してからクリックすると、選択した部分だけを読めます。本文の取り出しは簡易的なので、サイトによっては余計な文章が混ざったり、うまく取れなかったりします。</p>
+    <p class="note">ページ内の文章を選択してからクリックすると、選択した部分だけを読めます。</p>
   </section>
+
+  <p class="note">本文の取り出しは「段落が一番多く集まっている部分」を本文とみなす簡易的な方法です。サイトによっては余計な文章が混ざったり、うまく取れなかったりします。</p>
 </main>
 <script>
-  // ブックマークレット本体：選択範囲 → article/main 内の本文要素 → ページ全体、の順に文章を取る
+  // 本文抽出の本体は extract.js。ショートカット用とブックマークレット用に、それぞれ呼び出し部分を付け足す。
   const APP = new URL('./', location.href).href;
-  const code = `(()=>{let t=String(getSelection()).trim();if(!t){const r=document.querySelector('article')||document.querySelector('main')||document.body;t=[...r.querySelectorAll('h1,h2,h3,h4,p,li,blockquote,pre')].filter(e=>!e.closest('nav,header,footer,aside,form,figure')&&!e.parentElement.closest('p,li,blockquote,pre')).map(e=>e.innerText.trim()).filter(Boolean).join('\\n');if(!t)t=r.innerText.trim();}if(!t){alert('本文が見つかりませんでした');return;}window.open(${JSON.stringify(APP)}+'#title='+encodeURIComponent(document.title)+'&text='+encodeURIComponent(t));})()`;
-  document.getElementById('bm').href = 'javascript:' + encodeURIComponent(code);
+  fetch('extract.js').then((r) => r.text()).then((src) => {
+    const extract = src.replace(/^\/\/.*\n/gm, '').trim();
+    document.getElementById('script').value = extract + '\ncompletion(rsvpExtract());\n';
+    const bm = extract + `;(function(){var t=rsvpExtract();if(!t){alert('本文が見つかりませんでした');return;}window.open(${JSON.stringify(APP)}+'#text='+encodeURIComponent(t));})()`;
+    document.getElementById('bm').href = 'javascript:' + encodeURIComponent(bm);
+  });
   document.getElementById('bm').addEventListener('click', (e) => {
     e.preventDefault();
     alert('このボタンはブックマークバーにドラッグして登録してください');
+  });
+  document.getElementById('copyScript').addEventListener('click', async (e) => {
+    const ta = document.getElementById('script');
+    try { await navigator.clipboard.writeText(ta.value); }
+    catch (_) { ta.select(); document.execCommand('copy'); }
+    e.target.textContent = 'コピーしました';
+    setTimeout(() => { e.target.textContent = 'スクリプトをコピー'; }, 2000);
   });
 </script>
 </body>
