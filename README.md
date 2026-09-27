@@ -20,7 +20,7 @@
 
 [howto.html](https://mconfjp.github.io/rsvp-reader/howto.html) に手順がある。
 
-- **iPhone**：ショートカット「RSVPで読む」を手順どおりに作る。Safariの共有メニューから、リーダー機能で取り出した本文をアプリに渡す
+- **iPhone**：ショートカット「RSVPで読む」（[iCloudリンク](https://www.icloud.com/shortcuts/2f5ec157e4cc4ce2a1e8d28ff109fd19)）。Safariの共有メニューから、リーダー機能で取り出した本文をアプリに渡す
 - **PC**：ブックマークレット。選択範囲、`article`/`main` 内の本文要素、ページ全体の順に文章を探す
 
 アプリは `#text=<URLエンコードした本文>&title=<タイトル>` で文章を受け取る（`title` は省略可）。`#` 以降はサーバーに送られない。
