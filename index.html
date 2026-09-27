@@ -56,6 +56,7 @@
     background: none; border: 1px solid var(--line); border-radius: 10px;
     padding: 8px 12px; min-height: 40px;
   }
+  a.ghost { text-decoration: none; font-size: .85rem; display: inline-flex; align-items: center; }
   .primary {
     background: var(--accent); color: var(--accent-text); border: 0; border-radius: 12px;
     padding: 14px; font-weight: 700; font-size: 1rem;
@@ -150,6 +151,7 @@
   <section id="home" class="view">
     <header>
       <h1>RSVPリーダー</h1>
+      <a href="howto.html" class="ghost link">記事から読む</a>
     </header>
     <textarea id="input" placeholder="読みたい文章をここに貼り付け"></textarea>
     <button id="startBtn" class="primary" disabled>読む</button>
@@ -275,22 +277,42 @@ function renderHistory() {
 
 $('input').addEventListener('input', () => { $('startBtn').disabled = !$('input').value.trim(); });
 
-$('startBtn').addEventListener('click', () => {
-  const text = $('input').value.trim();
-  if (!text) return;
+function openText(text, title) {
   let item = db.items.find((it) => it.text === text);
   if (!item) {
-    item = { id: Date.now().toString(36), title: makeTitle(text), text, offset: 0, progress: 0, openedAt: Date.now() };
+    item = {
+      id: Date.now().toString(36), title: (title && title.trim().slice(0, 60)) || makeTitle(text),
+      text, offset: 0, progress: 0, openedAt: Date.now(),
+    };
     db.items.push(item);
     if (db.items.length > MAX_HISTORY) {
       db.items.sort((a, b) => b.openedAt - a.openedAt);
       db.items.length = MAX_HISTORY;
     }
   }
+  openReader(item);
+}
+
+$('startBtn').addEventListener('click', () => {
+  const text = $('input').value.trim();
+  if (!text) return;
   $('input').value = '';
   $('startBtn').disabled = true;
-  openReader(item);
+  openText(text);
 });
+
+// ショートカットやブックマークレットから #title=...&text=... で文章を受け取る。
+// # 以降はサーバーに送られないので、本文が外部に残らない。
+function importFromHash() {
+  if (location.hash.length < 2) return;
+  const params = new URLSearchParams(location.hash.slice(1));
+  const text = (params.get('text') || '').replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  history.replaceState(null, '', location.pathname + location.search);
+  if (!text) return;
+  if (!$('reader').hidden) closeReader();
+  openText(text, params.get('title'));
+}
+addEventListener('hashchange', importFromHash);
 
 $('history').addEventListener('click', (e) => {
   const li = e.target.closest('li');
@@ -539,6 +561,7 @@ document.addEventListener('visibilitychange', () => {
 // ---------- 起動 ----------
 applySettings();
 renderHistory();
+importFromHash();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

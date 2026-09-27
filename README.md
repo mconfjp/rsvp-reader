@@ -16,6 +16,15 @@
 | 速さ | − / ＋ ボタン | ↑ / ↓ |
 | 一覧に戻る | ← 一覧 | Esc |
 
+## 記事をワンタップで読む
+
+[howto.html](https://mconfjp.github.io/rsvp-reader/howto.html) に手順がある。
+
+- **iPhone**：ショートカット「RSVPで読む」（`RSVPで読む.shortcut`、`shortcuts sign --mode anyone` で署名済み）。Safariの共有メニューから、リーダー機能で取り出した本文をアプリに渡す
+- **PC**：ブックマークレット。選択範囲、`article`/`main` 内の本文要素、ページ全体の順に文章を探す
+
+アプリは `#text=<URLエンコードした本文>&title=<タイトル>` で文章を受け取る（`title` は省略可）。`#` 以降はサーバーに送られない。
+
 ## 仕様
 
 - **区切り**：`Intl.Segmenter` で単語に分割し、助詞・助動詞・送り仮名・句読点を前の語に、開き括弧を次の語にくっつけて文節に近い単位にする（`chunker.js`）。連続する漢字・カタカナは複合語としてまとめる
