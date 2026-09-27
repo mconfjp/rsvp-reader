@@ -57,6 +57,8 @@
     padding: 8px 12px; min-height: 40px;
   }
   a.ghost { text-decoration: none; font-size: .85rem; display: inline-flex; align-items: center; }
+  .clip { min-height: 48px; font-weight: 600; }
+  .clip.ready { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
   .primary {
     background: var(--accent); color: var(--accent-text); border: 0; border-radius: 12px;
     padding: 14px; font-weight: 700; font-size: 1rem;
@@ -153,6 +155,7 @@
       <h1>RSVPリーダー</h1>
       <a href="howto.html" class="ghost link">記事から読む</a>
     </header>
+    <button id="clipBtn" class="ghost clip">クリップボードから読む</button>
     <textarea id="input" placeholder="読みたい文章をここに貼り付け"></textarea>
     <button id="startBtn" class="primary" disabled>読む</button>
     <h2>履歴</h2>
@@ -301,16 +304,40 @@ $('startBtn').addEventListener('click', () => {
   openText(text);
 });
 
-// ショートカットやブックマークレットから #title=...&text=... で文章を受け取る。
+const normalize = (t) => t.replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+
+// iOSのショートカットは本文をクリップボードにコピーしてから #clip を開く。
+// クリップボードの読み取りにはユーザーのタップが必要なので、ボタンを押してもらう。
+async function readClipboard() {
+  $('clipBtn').classList.remove('ready');
+  $('clipBtn').textContent = 'クリップボードから読む';
+  let text = '';
+  try {
+    text = normalize(await navigator.clipboard.readText());
+  } catch (_) {
+    alert('クリップボードを読み取れませんでした');
+    return;
+  }
+  if (!text) { alert('クリップボードが空です'); return; }
+  openText(text);
+}
+$('clipBtn').addEventListener('click', readClipboard);
+
+// ブックマークレットなどから #title=...&text=... で文章を受け取る。
 // # 以降はサーバーに送られないので、本文が外部に残らない。
 function importFromHash() {
   if (location.hash.length < 2) return;
-  const params = new URLSearchParams(location.hash.slice(1));
-  const text = (params.get('text') || '').replace(/\r\n?/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  const hash = location.hash.slice(1);
   history.replaceState(null, '', location.pathname + location.search);
-  if (!text) return;
   if (!$('reader').hidden) closeReader();
-  openText(text, params.get('title'));
+  if (hash === 'clip') {
+    $('clipBtn').classList.add('ready');
+    $('clipBtn').textContent = 'タップして受け取った記事を読む';
+    return;
+  }
+  const params = new URLSearchParams(hash);
+  const text = normalize(params.get('text') || '');
+  if (text) openText(text, params.get('title'));
 }
 addEventListener('hashchange', importFromHash);
 
