@@ -325,10 +325,12 @@ $('clipBtn').addEventListener('click', readClipboard);
 
 // ブックマークレットなどから #title=...&text=... で文章を受け取る。
 // # 以降はサーバーに送られないので、本文が外部に残らない。
+// iOSのショートカットは # を含むURLを開けないので、?clip でも受け付ける。
 function importFromHash() {
-  if (location.hash.length < 2) return;
-  const hash = location.hash.slice(1);
-  history.replaceState(null, '', location.pathname + location.search);
+  const viaQuery = new URLSearchParams(location.search).has('clip');
+  if (location.hash.length < 2 && !viaQuery) return;
+  const hash = viaQuery ? 'clip' : location.hash.slice(1);
+  history.replaceState(null, '', location.pathname);
   if (!$('reader').hidden) closeReader();
   if (hash === 'clip') {
     $('clipBtn').classList.add('ready');

@@ -1,5 +1,5 @@
 // オンライン時は常に最新を取得し、オフライン時はキャッシュで動かす（network-first）
-const CACHE = 'rsvp-reader-v4';
+const CACHE = 'rsvp-reader-v5';
 const ASSETS = ['./', './index.html', './howto.html', './chunker.js', './manifest.webmanifest',
   './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
 
